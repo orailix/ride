@@ -1,0 +1,76 @@
+id: line_sections
+tier: silver
+
+title: Normalized Railway Line Sections
+description: |
+  Silver view of railway line sections with reference identifiers, geometry,
+  and matched operational-node sequences. Drops human-readable station labels
+  so downstream joins rely on the op_nodes dimension.
+
+source:
+  datasets:
+    - bronze/line_sections
+
+io:
+  sources:
+    main:
+      path: data/bronze/static/line_sections.parquet
+      format: parquet
+    op_nodes:
+      path: data/silver/static/op_nodes.parquet
+      format: parquet
+  output:
+    path: data/silver/static/line_sections.parquet
+    format: parquet
+
+transform:
+  function: src.dataset.silver.line_sections_transforms.build_line_sections
+  params:
+    matching_epsilon_m: 1
+    manual_delete_line_section_ids:
+      - 1165 # no events linked to this + disconnected from the main network
+    
+  drop:
+    - op_begin_name
+    - op_end_name
+
+checks:
+  - assert_unique: [line_section_id]
+  - assert_not_null: [op_begin_id, op_end_id, geoshape, matched_op_node_ids]
+
+fields:
+  - name: line_section_id
+    type: str
+    nullable: false
+    description: Unique identifier of the line section (as published)
+  - name: line_id
+    type: str
+    nullable: true
+    description: Identifier of the railway line this section belongs to
+  - name: op_begin_id
+    type: int
+    nullable: false
+    description: Operational point ID at the beginning of the section
+  - name: op_end_id
+    type: int
+    nullable: false
+    description: Operational point ID at the end of the section
+  - name: nb_tracks
+    type: int
+    nullable: true
+    description: Number of tracks in the section
+  - name: geoshape
+    type: str
+    nullable: false
+    description: Raw GeoJSON-like geometry string describing the line section shape
+  - name: matched_op_node_ids
+    type: array<int>
+    nullable: false
+    description: |
+      Ordered list of op_node identifiers aligned with the section geometry vertices;
+      values are null where the geometry vertex could not be matched within the tolerance.
+
+notes:
+  - Relies on bronze/static/line_sections.parquet created by the bronze pipeline.
+  - Output keeps identifiers and structural attributes; station names are stored in silver.op_nodes.
+  - Additional enrichment (e.g., topology expansion) happens in downstream layers.

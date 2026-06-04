@@ -1,0 +1,19 @@
+train:
+  hidden_dims:
+    - 256
+    - 512
+    - 1024
+    - 2048
+    - 1024
+    - 512
+    - 256
+  dropout: 0.1
+  epochs: 64
+  batch_size: 4096
+  num_workers: 6
+  precision: fp32
+  lr: 1.31e-4
+  weight_decay: 1.68e-6
+
+eval:
+  batch_size: 4096

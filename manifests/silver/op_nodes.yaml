@@ -1,0 +1,86 @@
+id: op_nodes
+tier: silver
+
+title: Enriched Operational Nodes
+description: |
+  Silver-level dimension that completes the operational node catalogue by
+  combining published metadata with coordinates inferred from line sections
+  and event observations.
+
+source:
+  datasets:
+    - bronze/op_nodes
+    - bronze/line_sections
+    - bronze/events
+
+io:
+  sources:
+    op_nodes:
+      format: parquet
+      path: data/bronze/static/op_nodes.parquet
+    line_sections:
+      format: parquet
+      path: data/bronze/static/line_sections.parquet
+    events:
+      format: parquet
+      path: data/bronze/events/events_*.parquet
+      load: lazy
+  output:
+    path: data/silver/static/op_nodes.parquet
+    format: parquet
+
+transform:
+  function: src.dataset.silver.op_nodes_transforms.build_op_nodes
+  params:
+    verbose: true
+    manual_delete_op_ids:
+      - 1296 # no events linked to this node + disconnected from the main network
+      - 1297 # no events linked to this node + disconnected from the main network
+      - 1375 # no events linked to this node + not attached to a line section
+      - 1679 # no events linked to this node + not attached to a line section
+    manual_overrides:
+    - op_id: 125 # set on line_section_id 2117 at geoshape index 95
+      lat: 50.608109
+      lon: 4.345738
+    - op_id: 864 # set on line_section_id 226 at geoshape index 27
+      lat: 51.182041
+      lon: 4.447445
+    - op_id: 2291 # set on line_section_id 1311 at geoshape index 50
+      lat: 51.215153
+      lon: 4.343784
+    - op_id: 2300 # set on line_section_id 1012 between geoshape index 16 and 17, snaps automatically to the line section
+      lat: 51.021066
+      lon: 4.136481
+      
+checks:
+  - assert_unique: [op_id]
+
+fields:
+  - name: op_id
+    type: int
+    nullable: false
+    description: Operational point identifier (canonical key)
+  - name: op_name
+    type: str
+    nullable: true
+    description: Best-effort operational point name
+  - name: op_type
+    type: str
+    nullable: true
+    description: Operational point type/category
+  - name: lat
+    type: float
+    nullable: false
+    description: Latitude in WGS84
+  - name: lon
+    type: float
+    nullable: false
+    description: Longitude in WGS84
+
+notes:
+  - Coordinates are prioritized from bronze metadata, then inferred from line section endpoints, then from event observations.
+  - When an inferred node matches an existing bronze op_id, the bronze name/type are preserved.
+  - Additional validation logic (e.g. distance thresholds) can be implemented in the transformation function.
+
+
+

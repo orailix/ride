@@ -1,0 +1,84 @@
+id: op_nodes
+tier: bronze
+
+title: Railway Nodes (Operational Points)
+description: |
+  Operational points of the Belgian railway network (stations, junctions, technical posts).
+  Canonical node list used to anchor events and topology.
+
+source:
+  portal_url: https://opendata.infrabel.be/explore/dataset/operationele-punten-van-het-netwerk
+  upstream_datasets: []
+
+io:
+  sources:
+    main:
+      path: data/raw/static/operationele-punten-van-het-netwerk.csv
+      format: csv
+      sep: ";"
+      encoding: utf-8
+  output:
+    path: data/bronze/static/op_nodes.parquet
+    format: parquet
+
+transform:
+  rename:
+    PTCAR ID: op_id
+    Abbreviation BTS Dutch complete: op_name
+    Classification EN: op_type
+  drop:
+    - "Geo Shape"
+    - "TAF/TAP code"
+    - "Symbolic name"
+    - "Abbreviation BTS French short"
+    - "Abbreviation BTS Dutch short"
+    - "Abbreviation BTS French complete"
+    - "Short name in French"
+    - "Short name in Dutch"
+    - "Middle name in French"
+    - "Middle name in Dutch"
+    - "Complete name in French"
+    - "Complete name in Dutch"
+    - "Classification NL"
+    - "Classification FR"
+  normalize:
+    op_id: {to_type: int}
+    op_name: {to_type: str, strip: true}
+    op_type: {to_type: str, strip: true, upper: false}
+    Geo Point:
+      split:
+        delimiter: ","
+        into: [lat, lon]
+        to_type: float
+  enrichments: []
+  features: []
+
+checks:
+  - assert_unique: [op_id]
+
+fields:
+  - name: op_id
+    type: int
+    description: Unique operational point identifier (canonical key)
+    nullable: false
+  - name: op_name
+    type: str
+    description: Dutch name of the operational point
+    nullable: true
+  - name: op_type
+    type: str
+    description: Operational point type/category as published
+    nullable: true
+  - name: lat
+    type: float
+    description: Latitude parsed from the published Geo Point field
+    nullable: true
+  - name: lon
+    type: float
+    description: Longitude parsed from the published Geo Point field
+    nullable: true
+
+notes:
+  - Bronze layer: no inference or completion (missing nodes/coords handled in Silver).
+  - Column headers may vary by language; rename covers FR/NL variants.
+  - Keep multilingual names; display-name consolidation deferred to Silver.

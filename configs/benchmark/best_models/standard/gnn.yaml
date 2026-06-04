@@ -1,0 +1,17 @@
+train:
+  batch_size: 16
+  lr: 1.17e-4
+  weight_decay: 9.35e-6
+  hidden_dim: 128
+  num_layers: 5
+  hetero_aggr: sum
+  use_layer_norm: false
+  gnn_dropout: 0.15
+  head_dropout: 0.0
+  edge_head_hidden_dim: 512
+  epochs: 49
+  num_workers: 6
+  precision: bf16
+
+eval:
+  batch_size: 16

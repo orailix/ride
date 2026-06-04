@@ -1,0 +1,11 @@
+train:
+  n_estimators: 1200
+  max_depth: 12
+  learning_rate: 8.13e-2
+  subsample: 1.0
+  colsample_bytree: 0.6
+  min_child_weight: 1
+  reg_alpha: 4.09e-2
+  reg_lambda: 9.05e-1
+
+eval: {}

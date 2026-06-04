@@ -1,0 +1,15 @@
+train:
+  d_model: 256
+  nhead: 1
+  num_layers: 6
+  dim_feedforward: 1024
+  dropout: 0.3
+  batch_size: 32
+  lr: 1.27e-4
+  weight_decay: 1.85e-6
+  epochs: 58
+  num_workers: 6
+  precision: fp32
+
+eval:
+  batch_size: 32

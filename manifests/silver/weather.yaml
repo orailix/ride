@@ -1,0 +1,60 @@
+id: weather
+tier: silver
+
+title: Weather (Open-Meteo Archive)
+description: |
+  Hourly weather variables fetched from Open-Meteo's archive API for each operational point.
+  Fetching is done via scripts (see scripts/dataset/download/download_weather_data.py); this only concatenates
+  the already-downloaded raw files into a single static table.
+
+io:
+  sources:
+    main:
+      path: data/raw/weather/weather_*.parquet
+      format: parquet
+  output:
+    path: data/silver/static/weather.parquet
+    format: parquet
+
+transform:
+  function: src.dataset.silver.weather_utils.concat_weather_raw
+
+fields:
+  - name: op_id
+    type: int
+    description: Operational point identifier
+    nullable: false
+  - name: time
+    type: datetime
+    description: Timestamp (Brussels/Europe timezone) for the weather observation
+    nullable: false
+  - name: temperature_2m
+    type: float
+    description: Air temperature at 2 m above ground (°C)
+    nullable: true
+  - name: rain
+    type: float
+    description: Liquid precipitation (rain) sum (mm)
+    nullable: true
+  - name: snowfall
+    type: float
+    description: Fresh snowfall water equivalent (cm)
+    nullable: true
+  - name: relative_humidity_2m
+    type: float
+    description: Relative humidity at 2 m (%)
+    nullable: true
+  - name: wind_speed_10m
+    type: float
+    description: Wind speed at 10 m above ground (m/s)
+    nullable: true
+  - name: weather_code
+    type: int
+    description: WMO weather code (see Open-Meteo documentation)
+    nullable: true
+
+notes:
+  - Raw fetch files live under data/raw/weather/ as weather_{start}-{end}.parquet.
+  - Use scripts/dataset/download/download_weather_data.py to fetch batches (respect API rate limits).
+  - This manifest only concatenates the raw files.
+  - This is executed separately from the silver pipeline because the raw weather download depends on silver op_nodes and must be split into batches to respect API rate limits.

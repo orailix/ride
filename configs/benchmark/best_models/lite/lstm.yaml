@@ -1,0 +1,16 @@
+train:
+  batch_size: 512
+  lr: 1.32e-3
+  weight_decay: 1.72e-5
+  hidden_dim: 512
+  num_layers: 3
+  dropout: 0.15
+  static_hidden_dim: 512
+  static_out_dim: 256
+  head_hidden_dim: 512
+  epochs: 12
+  num_workers: 6
+  precision: fp32
+
+eval:
+  batch_size: 512

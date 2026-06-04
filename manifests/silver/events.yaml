@@ -1,0 +1,84 @@
+id: events
+tier: silver
+
+title: Clean Train Events
+description: >
+  Silver-level event table built from bronze punctuality records.
+  Fixes schedule inconsistencies, enforces monotonic timelines, and
+  filters implausible journeys while preserving arrival/departure ordering.
+  Keeps per-event line context (`arr_line_id`, `dep_line_id`) to support
+  downstream path/graph construction.
+
+source:
+  datasets:
+    - bronze/events
+
+io:
+  sources:
+    main:
+      path: data/bronze/events/events_*.parquet
+      format: parquet
+  output:
+    path: data/silver/events/events_*.parquet
+    format: parquet
+
+transform:
+  function: src.dataset.silver.events_transforms.build_events
+  params:
+    apply_intra_stop_conflicts: true
+    apply_planned_monotonic: true
+    apply_observed_monotonic: true
+    planned_monotonic_threshold_sec: 120
+    intra_stop_conflict_threshold_sec: 120
+    observed_monotonic_threshold_sec: 120
+    max_late_sec: 14400
+    max_early_sec: 3600
+    verbose: true
+
+checks:
+  - assert_not_null: [train_id, service_date, event_type, planned_ts, observed_ts]
+
+fields:
+  - name: train_id
+    type: str
+    nullable: false
+    description: Train identifier for the given service
+  - name: service_date
+    type: str
+    nullable: false
+    description: Scheduled service date (as published, format DDMMMYYYY)
+  - name: op_id
+    type: int
+    nullable: false
+    description: Operational point identifier where the event occurs
+  - name: event_type
+    type: str
+    nullable: false
+    description: Event category (A=arrival, D=departure, P=pass-through)
+  - name: arr_line_id
+    type: str
+    nullable: true
+    description: Arrival-side line identifier for the event (null for pure departures).
+  - name: dep_line_id
+    type: str
+    nullable: true
+    description: Departure-side line identifier for the event (null for pure arrivals).
+  - name: planned_ts
+    type: timestamp
+    nullable: false
+    description: Scheduled timestamp of the event
+  - name: observed_ts
+    type: timestamp
+    nullable: false
+    description: Observed timestamp of the event
+  - name: delay_sec
+    type: int
+    nullable: true
+    description: Observed delay in seconds (observed_ts - planned_ts)
+
+notes:
+  - Events with inconsistent schedules are corrected or dropped before splitting into arrivals/departures.
+  - For split stops: A rows keep `arr_line_id` and set `dep_line_id` null; D rows keep `dep_line_id` and set `arr_line_id` null.
+  - P rows keep both line identifiers as available in bronze.
+  - Observed timestamps are enforced to be monotonic within each journey, with small regressions clamped.
+  - Journeys exhibiting extreme delays (outside configurable bounds) are removed.

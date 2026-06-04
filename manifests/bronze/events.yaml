@@ -1,0 +1,147 @@
+id: events
+tier: bronze
+
+title: Train Event Log (Raw Punctuality)
+description: |
+  Raw monthly train punctuality data as published by Infrabel.
+  Each row corresponds to a scheduled event (arrival or departure) for a given train at a given operational point.
+  This dataset is the backbone for temporal modeling and delay analysis.
+
+source:
+  portal_url: https://opendata.infrabel.be/explore/dataset/stiptheid-gegevens-maandelijksebestanden
+  upstream_datasets: []
+
+io:
+  sources:
+    main:
+      path: data/raw/events/Data_raw_punctuality_*.csv
+      format: csv
+      sep: ","
+      encoding: utf-8
+  output:
+    path: data/bronze/events/events_*.parquet
+    format: parquet
+
+transform:
+  rename:
+    DATDEP: service_date
+    TRAIN_NO: train_id
+    RELATION: train_relation
+    TRAIN_SERV: operator
+    PTCAR_NO: op_id
+    LINE_NO_DEP: dep_line_id
+    LINE_NO_ARR: arr_line_id
+    REAL_TIME_ARR: observed_arrival_time
+    REAL_TIME_DEP: observed_departure_time
+    PLANNED_TIME_ARR: sched_arrival_time
+    PLANNED_TIME_DEP: sched_departure_time
+    RELATION_DIRECTION: relation_direction
+    PTCAR_LG_NM_NL: op_name
+    PLANNED_DATE_ARR: sched_arrival_date
+    PLANNED_DATE_DEP: sched_departure_date
+    REAL_DATE_ARR: observed_arrival_date
+    REAL_DATE_DEP: observed_departure_date
+  drop:
+   - "THOP1_COD"
+   - "DELAY_ARR"
+   - "DELAY_DEP"
+   - "CIRC_TYP"
+  normalize:
+    service_date: {to_type: str, strip: true, upper: true}
+    train_id: {to_type: str, strip: true}
+    train_relation: {to_type: str, strip: true}
+    operator: {to_type: str, strip: true, upper: true}
+    op_id: {to_type: int}
+    dep_line_id: {to_type: str, strip: true, upper: true}
+    arr_line_id: {to_type: str, strip: true, upper: true}
+    observed_arrival_time: {to_type: str, strip: true}
+    observed_departure_time: {to_type: str, strip: true}
+    sched_arrival_time: {to_type: str, strip: true}
+    sched_departure_time: {to_type: str, strip: true}
+    relation_direction: {to_type: str, strip: true}
+    op_name: {to_type: str, strip: true}
+    sched_arrival_date: {to_type: str, strip: true, upper: true}
+    sched_departure_date: {to_type: str, strip: true, upper: true}
+    observed_arrival_date: {to_type: str, strip: true, upper: true}
+    observed_departure_date: {to_type: str, strip: true, upper: true}
+  enrichments: []
+  features: []
+
+checks:
+  - assert_not_null: [train_id, op_id, service_date]
+
+fields:
+  - name: service_date
+    type: str
+    description: Scheduled service date (as published, format DDMMMYYYY)
+    nullable: false
+  - name: train_id
+    type: str
+    description: Train identifier for the given service
+    nullable: false
+  - name: train_relation
+    type: str
+    description: Train relation code (e.g. IC 03, P 8015)
+    nullable: true
+  - name: operator
+    type: str
+    description: Train operator (e.g. SNCB/NMBS)
+    nullable: true
+  - name: op_id
+    type: int
+    description: Operational point ID where the event occurred
+    nullable: false
+  - name: op_name
+    type: str
+    description: Operational point name in Dutch (as published)
+    nullable: true
+  - name: dep_line_id
+    type: str
+    description: Line ID used for departure
+    nullable: true
+  - name: arr_line_id
+    type: str
+    description: Line ID used for arrival
+    nullable: true
+  - name: sched_arrival_date
+    type: str
+    description: Planned arrival date (raw string)
+    nullable: true
+  - name: sched_departure_date
+    type: str
+    description: Planned departure date (raw string)
+    nullable: true
+  - name: observed_arrival_date
+    type: str
+    description: Observed arrival date (raw string)
+    nullable: true
+  - name: observed_departure_date
+    type: str
+    description: Observed departure date (raw string)
+    nullable: true
+  - name: sched_arrival_time
+    type: str
+    description: Planned arrival time (HH:MM:SS)
+    nullable: true
+  - name: sched_departure_time
+    type: str
+    description: Planned departure time (HH:MM:SS)
+    nullable: true
+  - name: observed_arrival_time
+    type: str
+    description: Observed arrival time (HH:MM:SS)
+    nullable: true
+  - name: observed_departure_time
+    type: str
+    description: Observed departure time (HH:MM:SS)
+    nullable: true
+  - name: relation_direction
+    type: str
+    description: Train route direction (e.g. IC 03 BLANKENBERGE -> GENK)
+    nullable: true
+
+notes:
+  - Raw monthly punctuality dataset; one file per month per year.
+  - All date/time fields kept as raw strings in Bronze; parsed into unified timestamps in Silver.
+  - Contains both arrival and departure events; missing values depend on stop type.
+  - Core dataset for event-level modeling and delay reconstruction.

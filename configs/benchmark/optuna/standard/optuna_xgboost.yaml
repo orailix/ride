@@ -1,0 +1,61 @@
+n_estimators:
+  type: categorical
+  choices:
+    - 200
+    - 400
+    - 800
+    - 1200
+
+max_depth:
+  type: categorical
+  choices:
+    - 6
+    - 8
+    - 10
+    - 12
+
+learning_rate:
+  type: float
+  min: 0.005
+  max: 0.1
+  log: true
+
+subsample:
+  type: float
+  min: 0.6
+  max: 1.0
+  step: 0.1
+
+colsample_bytree:
+  type: float
+  min: 0.5
+  max: 1.0
+  step: 0.1
+
+min_child_weight:
+  type: categorical
+  choices:
+    - 1
+    - 5
+    - 10
+    - 20
+
+reg_alpha:
+  type: float
+  min: 0.001
+  max: 10.0
+  log: true
+
+reg_lambda:
+  type: float
+  min: 0.001
+  max: 10.0
+  log: true
+
+val_fraction:
+  type: fixed
+  value: 0.1
+
+early_stopping_rounds:
+  type: fixed
+  value: 25

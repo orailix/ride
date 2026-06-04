@@ -1,0 +1,101 @@
+id: line_sections
+tier: bronze
+
+title: Railway Line Sections
+description: |
+  Publisher-defined sections belonging to a railway line. Each section spans from a begin OP to an end OP
+  and may carry infrastructure attributes (e.g., electrification, gauge). Kept as-published; no inference.
+
+source:
+  portal_url: https://opendata.infrabel.be/explore/dataset/lijnsecties
+  upstream_datasets: []
+
+io:
+  sources:
+    main:
+      path: data/raw/static/lijnsecties.csv
+      format: csv
+      sep: ";"
+      encoding: utf-8
+  output:
+    path: data/bronze/static/line_sections.parquet
+    format: parquet
+
+transform:
+  rename:
+    Geo Shape: geoshape
+    Line section id: line_section_id
+    Railway line to which the section belongs: line_id
+    ID of the operational point at the beginning of the section: op_begin_id
+    Abbreviation BVT of the operational point at the beginning of the section: op_begin_name
+    ID of the operational point at the end of the section: op_end_id
+    Abbreviation BVT of the operational point at the end of the section: op_end_name
+    Number of tracks: nb_tracks
+  drop:
+    - "Geo Point"
+    - "M-coordinate of the beginning of the section"
+    - "M-coordinate of the end of the section"
+    - "Installed electrification"
+    - "Maximum permitted intensity of the electric power that a riding train is allowed to draw"
+    - "Maximum current intensity that the train is allowed to draw when stationary"
+    - "Minimum catenary’s height"
+    - "c400"
+    - "c70"
+    - "p400"
+    - "p70"
+    - "Symbolic name of the operational point at the beginning of the section"
+    - "Symbolic name of the operational point at the end of the section"
+  normalize:
+    line_section_id: {to_type: str, strip: true, upper: true}
+    line_id: {to_type: str, strip: true, upper: true}
+    op_begin_id: {to_type: int}
+    op_end_id: {to_type: int}
+    op_begin_name: {to_type: str, strip: true}
+    op_end_name: {to_type: str, strip: true}
+    nb_tracks: {to_type: int}
+    geoshape: {to_type: str, strip: true}
+  enrichments: []
+  features: []
+
+checks:
+  - assert_unique: [line_section_id]
+  - assert_not_null: [op_begin_id, op_end_id]
+
+fields:
+  - name: line_section_id
+    type: str
+    description: Unique identifier of the line section (as published)
+    nullable: false
+  - name: line_id
+    type: str
+    description: Identifier of the railway line this section belongs to
+    nullable: true
+  - name: op_begin_id
+    type: int
+    description: Operational point ID at the beginning of the section
+    nullable: false
+  - name: op_begin_name
+    type: str
+    description: Abbreviation (BVT) of the operational point at the beginning of the section
+    nullable: true
+  - name: op_end_id
+    type: int
+    description: Operational point ID at the end of the section
+    nullable: false
+  - name: op_end_name
+    type: str
+    description: Abbreviation (BVT) of the operational point at the end of the section
+    nullable: true
+  - name: nb_tracks
+    type: int
+    description: Number of tracks in the section
+    nullable: true
+  - name: geoshape
+    type: str
+    description: Raw GeoJSON-like geometry string describing the line section shape
+    nullable: true
+
+notes:
+  - Bronze keeps the publisher's section geometry and attributes as-is; path decomposition into adjacent segments is a Silver task.
+  - Column headers may appear in FR or NL; multiple rename entries are provided, and only those present will apply.
+  - IDs are normalized to uppercase trimmed strings to match events/op nodes downstream.

@@ -1,0 +1,33 @@
+# Pinned dependency set for Python 3.11.
+
+numpy==2.4.2
+pandas==3.0.0
+pyarrow==23.0.0
+PyYAML==6.0.3
+requests==2.32.5
+tqdm==4.67.3
+huggingface_hub==1.7.1
+
+# Dataset construction
+shapely==2.1.2
+pyproj==3.7.2
+geopandas==1.1.2
+openmeteo-requests==1.7.5
+networkx==3.6.1
+scipy==1.17.0
+
+# Benchmark models and hyperparameter search
+scikit-learn==1.8.0
+xgboost==3.2.0
+torch==2.10.0
+torch-geometric==2.7.0
+optuna==4.3.0
+
+# Plotting, figures, and notebooks
+matplotlib==3.10.8
+plotly==6.5.2
+contextily==1.7.0
+folium==0.20.0
+branca==0.8.2
+imageio==2.37.2
+seaborn==0.13.2

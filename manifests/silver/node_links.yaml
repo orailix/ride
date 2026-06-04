@@ -1,0 +1,50 @@
+id: node_links
+tier: silver
+
+title: Node Links From Line Sections
+description: |
+  Silver adjacency table derived from the line_sections silver dataset.
+  Each row represents a connection between successive matched
+  op_nodes along a line section geometry, preserving duplicates.
+
+source:
+  datasets:
+    - silver/line_sections
+
+io:
+  sources:
+    main:
+      path: data/silver/static/line_sections.parquet
+      format: parquet
+  output:
+    path: data/silver/static/node_links.parquet
+    format: parquet
+
+transform:
+  function: src.dataset.silver.node_links_transforms.build_node_links
+
+fields:
+  - name: link_id
+    type: int
+    nullable: false
+    description: Unique identifier assigned to each node link
+  - name: u_node_id
+    type: int
+    nullable: false
+    description: First endpoint node identifier
+  - name: v_node_id
+    type: int
+    nullable: false
+    description: Second endpoint node identifier
+  - name: line_section_id
+    type: str
+    nullable: true
+    description: Identifier of the line section that produced the edge
+  - name: distance_m
+    type: float
+    nullable: true
+    description: Great-circle distance in meters between consecutive matched nodes
+
+notes:
+  - Links are treated as undirected edges of the railway graph, and duplicates are preserved to reflect multiple traversals.
+  - Distances are computed from the line section geoshape using great-circle calculations.

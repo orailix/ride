@@ -1,0 +1,104 @@
+id: journeys
+tier: silver
+
+title: Journey Summaries
+description: >
+  Aggregated silver journeys built from sanitized bronze events. Journeys are
+  aligned with the silver events table and expose start/end timing plus counts
+  for downstream modeling.
+
+source:
+  datasets:
+    - bronze/events
+    - silver/events
+
+io:
+  sources:
+    bronze_events:
+      path: data/bronze/events/events_*.parquet
+      format: parquet
+    silver_events:
+      path: data/silver/events/events_*.parquet
+      format: parquet
+    node_links:
+      path: data/silver/static/node_links.parquet
+      format: parquet
+    line_sections:
+      path: data/silver/static/line_sections.parquet
+      format: parquet
+  output:
+    path: data/silver/journeys/journeys_*.parquet
+    format: parquet
+
+transform:
+  function: src.dataset.silver.events_transforms.build_journeys
+
+checks:
+  - assert_unique: [train_id, service_date]
+
+fields:
+  - name: train_id
+    type: str
+    nullable: false
+    description: Train identifier for the journey
+  - name: service_date
+    type: str
+    nullable: false
+    description: Scheduled service date (DDMMMYYYY)
+  - name: train_relation
+    type: str
+    nullable: true
+    description: Train relation code (e.g. IC 03, P 8015)
+  - name: operator
+    type: str
+    nullable: true
+    description: Operating company
+  - name: relation_direction
+    type: str
+    nullable: true
+    description: Route description (origin -> destination)
+  - name: start_op_id
+    type: int
+    nullable: false
+    description: Operational point at journey start
+  - name: end_op_id
+    type: int
+    nullable: false
+    description: Operational point at journey end
+  - name: start_planned_ts
+    type: timestamp
+    nullable: false
+    description: Planned timestamp of the first event
+  - name: end_planned_ts
+    type: timestamp
+    nullable: false
+    description: Planned timestamp of the last event
+  - name: start_observed_ts
+    type: timestamp
+    nullable: false
+    description: Observed timestamp of the first event
+  - name: end_observed_ts
+    type: timestamp
+    nullable: false
+    description: Observed timestamp of the last event
+  - name: events_count
+    type: int
+    nullable: false
+    description: Total number of events retained for the journey
+  - name: max_delay_sec
+    type: int
+    nullable: true
+    description: Maximum observed delay (seconds) along the journey
+  - name: min_delay_sec
+    type: int
+    nullable: true
+    description: Minimum observed delay (seconds) along the journey
+  - name: deduced_paths
+    type: array
+    nullable: true
+    description: List of link_id sequences, one per silver event transition; transitions with unchanged op_id store [].
+
+notes:
+  - Journey rows are restricted to the (train_id, service_date) pairs produced by the silver events manifest.
+  - Bronze events are used only to recover journey-level metadata (operator/relation details); no additional cleaning is applied here.
+  - Deduced paths rely on node_links/line_sections topology and are computed directly from ordered silver event transitions.
